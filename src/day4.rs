@@ -1,102 +1,187 @@
-use crate::utils::{Solution,read_lines_as_vec_of_vec_of_chars};
+use crate::utils::{Solution,read_as_vector_of_string};
 
-pub fn part1(file_path: &str) -> Solution {
-        
-    let vectors = read_lines_as_vec_of_vec_of_chars(file_path);
-    // println!("{:?} {:?}", vectors[0], vectors[1]);
+#[derive(Clone)]
+struct Coordinate {
+    x: usize,
+    y: usize,
+}
+enum Direction {
+    Up,
+    Down,
+    Right,
+    Left,
+    UpRight,
+    UpLeft,
+    DownRight,
+    DownLeft
+}
+use Direction::*;
 
-    let directions = vec![
-        (0, 1),   // Horizontal right
-        (0, -1),  // Horizontal left
-        (1, 0),   // Vertical down
-        (-1, 0),  // Vertical up
-        (1, 1),   // Diagonal down-right
-        (-1, -1), // Diagonal up-left
-        (1, -1),  // Diagonal down-left
-        (-1, 1),  // Diagonal up-right
-    ];
+impl Coordinate {
+    fn relocate(self, direction: &Direction, max_x:&usize, max_y:&usize) -> Option<Self> {
+        let mut target = self.clone();
+        match direction {
+            Up if target.y > 0 => 
+                target.y -= 1,
 
-    let target = "XMAS".chars().collect::<Vec<char>>();
-    let rows = vectors.len();
-    let cols = vectors[0].len();
-    let mut count = 0;
+            Down if target.y < *max_y => 
+                target.y += 1,
 
-    for i in 0..rows {
-        for j in 0..cols {
-            for (dx, dy) in &directions {
-                if matches_pattern(&vectors, &target, i as isize, j as isize, *dx, *dy) {
-                    count += 1;
+            Right if target.x < *max_x => 
+                target.x += 1,
+
+            Left if target.x > 0 => 
+                target.x -= 1,
+
+            UpRight if target.y > 0 && target.x < *max_x => 
+                {
+                    target.y -= 1; 
+                    target.x += 1
+                },
+            UpLeft if target.y > 0 && target.x > 0 => 
+                {
+                    target.y -= 1; 
+                    target.x -= 1
+                },
+            DownRight if target.y < *max_y && target.x < *max_x => 
+                {
+                    target.y += 1; 
+                    target.x += 1
+                },
+            DownLeft if target.y < *max_y && target.x > 0 => 
+                {
+                    target.y += 1; 
+                    target.x -= 1
+                },
+            _ => return None
+        }
+        Some(target)
+    }
+}
+
+
+// ..X...
+// .SAMX.
+// .A..A.
+// XMAS.S
+// .X....
+
+fn search_xmas_pattern_1(data: &Vec<String>, first_location: Coordinate, max_x:&usize, max_y:&usize, direction: &Direction) -> bool {
+    
+    let second_location = first_location.relocate(direction, max_x, max_y);
+    if let Some(location) = second_location {
+        if data[location.y].chars().nth(location.x).unwrap() == 'M' {
+            let third_location = location.relocate(direction, max_x, max_y);
+            if let Some(location) = third_location {
+                if data[location.y].chars().nth(location.x).unwrap() == 'A' {
+                    let fourth_location = location.relocate(direction, max_x, max_y);
+                    if let Some(location) = fourth_location {
+                        if data[location.y].chars().nth(location.x).unwrap() == 'S' {
+                                return true
+                        }
+                    }
                 }
             }
         }
     }
-
-    count.into()
-
+    false
 }
 
-fn matches_pattern(
-    grid: &Vec<Vec<char>>,
-    pattern: &Vec<char>,
-    x: isize,
-    y: isize,
-    dx: isize,
-    dy: isize,
-) -> bool {
-    let rows = grid.len() as isize;
-    let cols = grid[0].len() as isize;
-
-    for (k, &c) in pattern.iter().enumerate() {
-        let nx = x + k as isize * dx;
-        let ny = y + k as isize * dy;
-
-        if nx < 0 || ny < 0 || nx >= rows || ny >= cols || grid[nx as usize][ny as usize] != c {
-            return false;
-        }
-    }
-
-    true
-}
-
-pub fn part2(file_path: &str) -> Solution {
-    let grid = read_lines_as_vec_of_vec_of_chars(file_path);
-    let rows = grid.len();
-    let cols = grid[0].len();
+pub fn part1(file_path: &str) -> Solution {
+    let data = read_as_vector_of_string(file_path);
+    let max_x = data[0].len()-1;
+    let max_y = data.len()-1;
     let mut count = 0;
+    
+    for x in 0..=max_x {
+        for y in 0..=max_y {
+            
+            if data[y].chars().nth(x).unwrap() != 'X' { continue; }
+            
+            let first_location = Coordinate {
+                x,
+                y,
+            };
+            
+            let directions = vec![Up, Down, Right, Left, UpRight, UpLeft, DownRight, DownLeft];
 
-    // Iterate through each potential center cell
-    for i in 1..rows-1 {
-        for j in 1..cols-1 {
-            if is_x_mas_pattern(&grid, i, j) {
-                count += 1;
+            for direction in directions {
+                if search_xmas_pattern_1(&data, first_location.clone(), &max_x, &max_y, &direction) { count += 1}
             }
         }
     }
-
     count.into()
+
 }
 
-fn is_x_mas_pattern(grid: &Vec<Vec<char>>, i: usize, j: usize) -> bool {
-    // Check if center is 'A'
-    if grid[i][j] != 'A' {
-        return false;
-    }
 
-    // Check diagonal patterns for MAS
-    let top_left = grid[i-1][j-1];
-    let top_right = grid[i-1][j+1];
-    let bottom_left = grid[i+1][j-1];
-    let bottom_right = grid[i+1][j+1];
 
-    // Check both diagonals for M and S in any order
-    let diagonal1_valid = (top_left == 'M' || top_left == 'S') && 
-                         (bottom_right == 'M' || bottom_right == 'S') &&
-                         top_left != bottom_right;  // Must be different
+// M.S
+// .A.
+// M.S
+
+// M.M
+// .A.
+// S.S
+
+// S.M
+// .A.
+// S.M
+
+// S.S
+// .A.
+// M.M
+
+
+
+fn search_xmas_pattern_2(data: &Vec<String>, first_location: Coordinate, max_x:&usize, max_y:&usize, directions: &Vec<Vec<Direction>>) -> bool {
     
-    let diagonal2_valid = (top_right == 'M' || top_right == 'S') &&
-                         (bottom_left == 'M' || bottom_left == 'S') &&
-                         top_right != bottom_left;  // Must be different
+    let second_location = first_location.clone().relocate(&directions[0][0], max_x, max_y);
+    let third_location = first_location.clone().relocate(&directions[0][1], max_x, max_y);
+    let fourth_location = first_location.clone().relocate(&directions[1][0], max_x, max_y);
+    let fifth_location = first_location.clone().relocate(&directions[1][1], max_x, max_y);
 
-    // Both diagonals must be valid
-    diagonal1_valid && diagonal2_valid
+    if let Some(location1) = second_location {
+        if let Some(location2) = third_location {
+            if let Some(location3) = fourth_location {
+                if let Some(location4) = fifth_location {
+                    let letter1 = data[location1.y].chars().nth(location1.x).unwrap();
+                    let letter2 = data[location2.y].chars().nth(location2.x).unwrap();
+                    let letter3 = data[location3.y].chars().nth(location3.x).unwrap();
+                    let letter4 = data[location4.y].chars().nth(location4.x).unwrap();
+                    if (letter1 == 'M' && letter2 == 'S' && letter3 == 'S' && letter4 == 'M') 
+                    || (letter1 == 'S' && letter2 == 'M' && letter3 == 'M' && letter4 == 'S')
+                    || (letter1 == 'M' && letter2 == 'S' && letter3 == 'M' && letter4 == 'S')
+                    || (letter1 == 'S' && letter2 == 'M' && letter3 == 'S' && letter4 == 'M') {
+                        return true
+                    }
+                }
+            }
+        }  
+    }
+    false
+}
+
+
+pub fn part2(file_path: &str) -> Solution {
+    let data = read_as_vector_of_string(file_path);
+    let max_x = data[0].len()-1;
+    let max_y = data.len()-1;
+    let mut count = 0;
+    
+    for x in 0..=max_x {
+        for y in 0..=max_y {
+            
+            if data[y].chars().nth(x).unwrap() != 'A' { continue; }
+            
+            let first_location = Coordinate {
+                x,
+                y,
+            };
+            
+            let directions = vec![vec![UpRight, DownLeft], vec![UpLeft, DownRight]];
+            if search_xmas_pattern_2(&data, first_location, &max_x, &max_y, &directions) { count += 1}
+        }
+    }
+    count.into()
 }

@@ -1,6 +1,7 @@
 pub mod day1;
 pub mod day2;
 pub mod day3;
+pub mod old;
 pub mod day4;
 
 mod utils;
@@ -103,25 +104,25 @@ mod tests_day4 {
 
     #[test]
     fn day4_test_part1_with_correct_result() {
-        let result = day4::part1("./data/day4_test_data");
+        let result = old::part1("./data/day4_test_data");
         assert_eq!(result, Solution::Integer32(18));
     }
 
     #[test]
     fn day4_test_part1_with_wrong_result() {
-        let result = day4::part1("./data/day4_test_data");
+        let result = old::part1("./data/day4_test_data");
         assert_ne!(result, Solution::Integer32(19));
     }
 
     #[test]
     fn day4_test_part2_with_correct_result() {
-        let result = day4::part2("./data/day4_test_data");
+        let result = old::part2("./data/day4_test_data");
         assert_eq!(result, Solution::Integer32(9));
     }
 
     #[test]
     fn day4_test_part2_with_wrong_result() {
-        let result = day4::part2("./data/day4_test_data");
+        let result = old::part2("./data/day4_test_data");
         assert_ne!(result, Solution::Integer32(10));
     }
 

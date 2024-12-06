@@ -1,8 +1,12 @@
 use advent_of_code_2024::*;
+use colored::Colorize;
 use std::{env, process};
 use std::time::Instant;
 
 fn main() {
+    // print!("{}[2J", 27 as char);
+    std::process::Command::new("clear").status().unwrap();
+
     let args: Vec<String> = env::args().collect();
     
     let (mut day,mut part) = (1,1);
@@ -29,13 +33,20 @@ fn main() {
         (d , p) if d <4 && p>2 => {println!("Invalid part. Max part is 2.");process::exit(1)},
         (d , p) if d >=4 && (p == 1 || p == 2) => {println!("Invalid day. Max day is 3.");process::exit(1)},
         _ => {println!("Invalid day or part. Max day is 3. Max part is 2.");process::exit(1)}
-    };
+    }.to_string().green();
 
     let elapsed = now.elapsed().as_micros();
+    let html = format!("{}", (match day {
+        1 => "https://adventofcode.com/2024/day/1",
+        2 => "https://adventofcode.com/2024/day/2",
+        3 => "https://adventofcode.com/2024/day/3",
+        4 => "https://adventofcode.com/2024/day/4",
+        _ => ""
+    }.blue()));
 
     println!(
-        " Advant of Code 2024:\n Day {} Part {}\n Solution {}\n Time Taken: {} microsec",
-        day, part, solution, elapsed
+        " Advant of Code 2024:\n Day {} Part {}\n\n HTTP Link: {}\n Solution {}\n Time Taken: {} microsec\n\n\n",
+        day, part, html, solution, elapsed
     );
     
 }
